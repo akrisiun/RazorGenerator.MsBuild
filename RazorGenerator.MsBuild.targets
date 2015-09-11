@@ -1,7 +1,7 @@
 ﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
     <PropertyGroup>
-        <RazorGeneratorMsBuildPath Condition=" '$(RazorGeneratorMsBuildPath)' == '' ">d:\Sanitex\RazorGenerator.MsBuild\RazorGenerator.MsBuild.dll</RazorGeneratorMsBuildPath>
-        <RazorViewsCodeGenDirectory Condition=" '$(RazorViewsCodeGenDirectory)' == '' ">$(MsBuildProjectDirectory)\Views\CodeGen\</RazorViewsCodeGenDirectory>
+        <RazorGeneratorMsBuildPath Condition=" '$(RazorGeneratorMsBuildPath)' == '' ">$(MSBuildThisFileDirectory)\RazorGenerator.MsBuild.dll</RazorGeneratorMsBuildPath>
+        <RazorViewsCodeGenDirectory Condition=" '$(RazorViewsCodeGenDirectory)' == '' ">$(MsBuildProjectDirectory)\obj\CodeGen\</RazorViewsCodeGenDirectory>
       
         <CompileDependsOn>
             PrecompileRazorFiles;
@@ -31,9 +31,9 @@
                                     RootNamespace="$(RootNamespace)">
             <Output TaskParameter="GeneratedFiles" ItemName="FilesGenerated" />
         </RazorCodeGen>
-        <!--<ItemGroup>
+        <ItemGroup>
           <Compile Include="@(FilesGenerated)" Condition=" '@(RazorOutputFiles)' == '' "/>
           <Compile Include="@(RazorOutputFiles)" />
-        </ItemGroup>-->
+        </ItemGroup>
     </Target>
 </Project>
