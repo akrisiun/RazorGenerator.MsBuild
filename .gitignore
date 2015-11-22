@@ -31,3 +31,5 @@ Thumbs.db
 obj/
 [Rr]elease*/
 .nuget/
+
+RazorGenerator*.dll
