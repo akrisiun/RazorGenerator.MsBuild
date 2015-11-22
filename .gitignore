@@ -32,4 +32,11 @@ obj/
 [Rr]elease*/
 .nuget/
 
+packages/
+lib/*.nlp
+lib/*.xml
+lib/*.dll
+*.xml
 RazorGenerator*.dll
+
+System*.dll
