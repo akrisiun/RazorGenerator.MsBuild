@@ -1,0 +1,97 @@
+.targets
+### http://www.oweng.net/Visual-Studio-2010/MSBuild/Custom-Tasks-in-MSBuild-4.0-and-Team-Foundation-Build-4.aspx
+
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <UsingTask TaskName="CTBinaries.ProduceHashManifest" AssemblyFile="..\_compiled\CTBinaries.dll" />
+  <Target Name="CustomAfterBuild"  >
+    <ProduceHashManifest BinariesFolder="$(OutputDirectory)" />
+  </Target>
+
+  <UsingTask TaskName="ProduceHashManifest_Inline"  TaskFactory="CodeTaskFactory" 
+        AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.v4.0.dll" >
+    <ParameterGroup>
+      <BinariesFolder ParameterType="System.String" Required="true" />
+    </ParameterGroup>
+    <Task>
+      <Reference Include="$(MSBuildBinPath)\Microsoft.Build.Framework.dll"/>
+      <Reference Include="$(MSBuildBinPath)\Microsoft.Build.Utilities.v4.0.dll"/>
+      <Using Namespace="Microsoft.Build.Framework" />
+      <Using Namespace="Microsoft.Build.Utilities" />
+      <Using Namespace="System"/>
+      <Using Namespace="System.IO"/>
+      <Using Namespace="System.Security.Cryptography" />
+      <Code Type="Class" Language="cs">
+
+        <![CDATA[
+    public class ProduceHashManifest_Inline : Microsoft.Build.Utilities.Task
+    {
+        private string _binariesFolder;
+
+        [Microsoft.Build.Framework.Required]
+        public string BinariesFolder
+        {
+            get
+            {
+                return _binariesFolder;
+            }
+            set
+            {
+                _binariesFolder = value;
+            }
+        }
+
+        public override bool Execute()
+        {
+            string contents =  HashOfFilesInThisDirectory(_binariesFolder);
+            WriteContentsToFile(contents);
+            Log.LogMessageFromText(contents, Microsoft.Build.Framework.MessageImportance.High);
+
+            return true;
+        }
+        
+        private string HashOfFilesInThisDirectory(string parentFolder)
+        {
+            string manifest = "(INLINE) Contents of " + parentFolder + "\r\n";
+            System.Security.Cryptography.MD5 myHash = 
+                new System.Security.Cryptography.MD5CryptoServiceProvider();
+            string[] fileList = System.IO.Directory.GetFiles(parentFolder);
+
+            foreach (string thisFile in fileList)
+            {
+                manifest += thisFile + ",";
+                using (System.IO.FileStream fs = 
+                    new System.IO.FileStream(System.IO.Path.Combine(parentFolder, thisFile), 
+                    System.IO.FileMode.Open, System.IO.FileAccess.Read))
+                {
+                    using (System.IO.BinaryReader br = new System.IO.BinaryReader(fs))
+                    {
+                        myHash.ComputeHash(br.ReadBytes((int)fs.Length));
+                        manifest += System.Convert.ToBase64String(myHash.Hash) + "\r\n";
+                    }
+                }
+            }
+            return manifest;
+        }
+        
+        private void WriteContentsToFile(string contents)
+        {
+            using (System.IO.StreamWriter sw = new System.IO.StreamWriter
+                (System.IO.Path.Combine(_binariesFolder, "hashManifest.txt"), false))
+            {
+                sw.Write("now: " + System.DateTime.Now);
+                sw.WriteLine();
+                sw.Write(contents);
+            }
+        }
+    }
+]]>
+
+      </Code>
+    </Task>
+  </UsingTask>
+
+  <Target Name="CustomAfterBuild_Inline" >
+    <ProduceHashManifest_Inline BinariesFolder="$(OutputDirectory)" />
+  </Target>
+
+</Project>
