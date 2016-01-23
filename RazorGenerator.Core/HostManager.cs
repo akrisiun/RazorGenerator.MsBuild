@@ -101,7 +101,8 @@ namespace RazorGenerator.Core
             catch (Exception exception)
             {
                 string availableHosts = String.Join(", ", GetAvailableHosts(container));
-                throw new InvalidOperationException(String.Format(CultureInfo.CurrentCulture, RazorGeneratorResources.GeneratorFailureMessage, projectRelativePath, availableHosts), exception);
+                throw new InvalidOperationException(String.Format(CultureInfo.CurrentCulture,
+                    RazorGeneratorResources.GeneratorFailureMessage, projectRelativePath, availableHosts), exception);
             }
 
             if (codeTransformer == null)

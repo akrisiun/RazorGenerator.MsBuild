@@ -2,6 +2,7 @@
     <PropertyGroup>
         <RazorGeneratorMsBuildPath Condition=" '$(RazorGeneratorMsBuildPath)' == '' ">$(MSBuildThisFileDirectory)\RazorGenerator.MsBuild.dll</RazorGeneratorMsBuildPath>
         <RazorViewsCodeGenDirectory Condition=" '$(RazorViewsCodeGenDirectory)' == '' ">$(MsBuildProjectDirectory)\Views\CodeGen\</RazorViewsCodeGenDirectory>
+      
         <CompileDependsOn>
             PrecompileRazorFiles;
             $(CompileDependsOn);
@@ -30,11 +31,9 @@
                                     RootNamespace="$(RootNamespace)">
             <Output TaskParameter="GeneratedFiles" ItemName="FilesGenerated" />
         </RazorCodeGen>
-		<!--
-        <ItemGroup>
+        <!--<ItemGroup>
           <Compile Include="@(FilesGenerated)" Condition=" '@(RazorOutputFiles)' == '' "/>
           <Compile Include="@(RazorOutputFiles)" />
-        </ItemGroup>
-		-->
+        </ItemGroup>-->
     </Target>
 </Project>

@@ -14,8 +14,8 @@ namespace RazorGenerator.MsBuild
 {
     public class RazorCodeGen : Task
     {
-        private static readonly Regex _namespaceRegex = new Regex(@"($|\.)(\d)");
-        private readonly List<ITaskItem> _generatedFiles = new List<ITaskItem>();
+        public readonly Regex _namespaceRegex = new Regex(@"($|\.)(\d)");
+        public readonly List<ITaskItem> _generatedFiles = new List<ITaskItem>();
 
         public ITaskItem[] FilesToPrecompile { get; set; }
 
@@ -40,7 +40,7 @@ namespace RazorGenerator.MsBuild
         {
             try
             {
-                return ExecuteCore();
+                return this.ExecuteCore();
             }
             catch (Exception ex)
             {
@@ -61,42 +61,121 @@ namespace RazorGenerator.MsBuild
             return true;
         }
 
-        private bool ExecuteCore()
+        public RTaskLoggingProxy _Log;
+        public new TaskLoggingHelper Log { get { return _Log ?? base.Log; } }
+    }
+
+    public class RTaskItem : ITaskItem
+    {
+        public System.Collections.IDictionary CloneCustomMetadata() { return null; }
+        public void CopyMetadataTo(ITaskItem destinationItem) { }
+        public string GetMetadata(string metadataName) { return null; }
+
+        public string ItemSpec { get; set; }
+        public int MetadataCount { get { return 0; } }
+
+        public System.Collections.ICollection MetadataNames { get { return null; } }
+        public void RemoveMetadata(string metadataName) { }
+        public void SetMetadata(string metadataName, string metadataValue) { }
+    }
+
+    public class RTaskLoggingProxy : TaskLoggingHelper
+    {
+        public class FakeTask : ITask
         {
-            if (FilesToPrecompile == null || !FilesToPrecompile.Any())
+            public IBuildEngine BuildEngine { get; set; }
+            public bool Execute()
             {
-                return true;
+                return false;
             }
 
-            string projectRoot = String.IsNullOrEmpty(ProjectRoot) ? Directory.GetCurrentDirectory() : ProjectRoot;
+            public ITaskHost HostObject { get; set; }
+        }
+
+        public RTaskLoggingProxy(ITask taskInstance = null) : base(taskInstance ?? new FakeTask()) { }
+    }
+
+    public static class Razor
+    {
+        public static RazorCodeGen Start(string directory = null)
+        {
+            directory = directory ?? Environment.CurrentDirectory;
+            var task = new RazorCodeGen();
+
+            task._Log = new RTaskLoggingProxy();
+            return task;
+        }
+
+        public static void LogMessage(this RazorCodeGen task, MessageImportance importance, string message, params object[] messageArgs)
+        {
+            if (task._Log != null)
+                Console.WriteLine(String.Format(message, messageArgs));
+            else
+                task.Log.LogMessage(importance, message, messageArgs);
+        }
+        public static void LogError(this RazorCodeGen task, string message, params object[] messageArgs)
+        {
+            if (task._Log != null)
+                Console.WriteLine(String.Format(message, messageArgs));
+            else
+                task.Log.LogError(message, messageArgs);
+        }
+
+        public static bool ExecuteCore(this RazorCodeGen task)
+        {
+            if (task.FilesToPrecompile == null)
+            {
+                var dir = Environment.CurrentDirectory;
+                var listCs = Directory.EnumerateFiles(dir, "*.cshtml", SearchOption.AllDirectories);
+                var numCS = listCs.GetEnumerator();
+                var list = new List<ITaskItem>();
+                while (numCS.MoveNext())
+                    list.Add(new RTaskItem { ItemSpec = numCS.Current });
+
+                if (list.Count > 0)
+                {
+                    ITaskItem[] array = new ITaskItem[list.Count];
+                    list.CopyTo(array);
+                    task.FilesToPrecompile = array;
+                }
+
+                if (!task.FilesToPrecompile.Any())
+                    return true;
+            }
+
+            task.CodeGenDirectory = task.CodeGenDirectory ?? Environment.CurrentDirectory + @"\CodeGen";
+
+            string projectRoot = String.IsNullOrEmpty(task.ProjectRoot)
+                ? Directory.GetCurrentDirectory() : task.ProjectRoot;
 
             using (var hostManager = new HostManager(projectRoot))
             {
-                foreach (var file in FilesToPrecompile)
+                foreach (var file in task.FilesToPrecompile)
                 {
-                    string filePath = file.GetMetadata("FullPath");
+                    string filePath = file.GetMetadata("FullPath") ?? file.ItemSpec;
                     string fileName = Path.GetFileName(filePath);
                     var projectRelativePath = GetProjectRelativePath(filePath, projectRoot);
-                    string itemNamespace = GetNamespace(file, projectRelativePath);
+                    string itemNamespace = task.GetNamespace(file, projectRelativePath);
 
-                    string outputPath = Path.Combine(CodeGenDirectory, projectRelativePath.TrimStart(Path.DirectorySeparatorChar)) + ".cs";
+                    string outputPath = Path.Combine(task.CodeGenDirectory, projectRelativePath.TrimStart(Path.DirectorySeparatorChar)) + ".cs";
                     if (!RequiresRecompilation(filePath, outputPath))
                     {
-                        Log.LogMessage(MessageImportance.Low, "Skipping file {0} since {1} is already up to date", filePath, outputPath);
+                        task.LogMessage(MessageImportance.Low, "Skipping file {0} since {1} is already up to date", filePath, outputPath);
                         continue;
                     }
                     EnsureDirectory(outputPath);
 
-                    Log.LogMessage(MessageImportance.Low, "Precompiling {0} at path {1}", filePath, outputPath);
+                    task.LogMessage(MessageImportance.Low, "Precompiling {0} at path {1}", filePath, outputPath);
                     var host = hostManager.CreateHost(filePath, projectRelativePath, itemNamespace);
 
                     bool hasErrors = false;
                     host.Error += (o, eventArgs) =>
                     {
-                        Log.LogError("RazorGenerator err", eventArgs.ErorrCode.ToString(), helpKeyword: "", file: file.ItemSpec,
-                                     lineNumber: (int)eventArgs.LineNumber, columnNumber: (int)eventArgs.ColumnNumber,
-                                     endLineNumber: (int)eventArgs.LineNumber, endColumnNumber: (int)eventArgs.ColumnNumber,
-                                     message: eventArgs.ErrorMessage);
+                        task.LogError("RazorGenerator err", eventArgs.ErorrCode.ToString() + " msg: " + eventArgs.ErrorMessage);
+                                //, helpKeyword: "", file: file.ItemSpec,
+                                //     lineNumber: (int)eventArgs.LineNumber, columnNumber: (int)eventArgs.ColumnNumber,
+                                //     endLineNumber: (int)eventArgs.LineNumber, endColumnNumber: (int)eventArgs.ColumnNumber,
+                                //     message: eventArgs.ErrorMessage);
 
                         hasErrors = true;
                     };
@@ -115,8 +194,9 @@ namespace RazorGenerator.MsBuild
                     {
                         if (exception.InnerException != null)
                             exception = exception.InnerException;
-                        Log.LogError("RazorGenerator err", exception.Message);
-                        Log.LogErrorFromException(exception, showStackTrace: true, showDetail: true, file: null);
+                        task.LogError("RazorGenerator err", exception.Message);
+                        if (task._Log == null)
+                            task.Log.LogErrorFromException(exception, showStackTrace: true, showDetail: true, file: null);
                         return false;
                     }
                     if (hasErrors)
@@ -128,7 +208,7 @@ namespace RazorGenerator.MsBuild
                     taskItem.SetMetadata("AutoGen", "true");
                     taskItem.SetMetadata("DependentUpon", "fileName");
 
-                    _generatedFiles.Add(taskItem);
+                    task._generatedFiles.Add(taskItem);
                 }
             }
             return true;
@@ -146,7 +226,7 @@ namespace RazorGenerator.MsBuild
             return File.GetLastWriteTimeUtc(filePath) > File.GetLastWriteTimeUtc(outputPath);
         }
 
-        private string GetNamespace(ITaskItem file, string projectRelativePath)
+        private static string GetNamespace(this RazorCodeGen task, ITaskItem file, string projectRelativePath)
         {
             string itemNamespace = file.GetMetadata("CustomToolNamespace");
             if (!String.IsNullOrEmpty(itemNamespace))
@@ -159,7 +239,7 @@ namespace RazorGenerator.MsBuild
             itemNamespace = projectRelativePath.Trim(Path.DirectorySeparatorChar);
             if (String.IsNullOrEmpty(itemNamespace))
             {
-                return RootNamespace;
+                return task.RootNamespace;
             }
 
             var stringBuilder = new StringBuilder(itemNamespace.Length);
@@ -179,11 +259,11 @@ namespace RazorGenerator.MsBuild
                 }
             }
             itemNamespace = stringBuilder.ToString();
-            itemNamespace = _namespaceRegex.Replace(itemNamespace, "$1_$2");
-            
-            if (!String.IsNullOrEmpty(RootNamespace))
+            itemNamespace = task._namespaceRegex.Replace(itemNamespace, "$1_$2");
+
+            if (!String.IsNullOrEmpty(task.RootNamespace))
             {
-                itemNamespace = RootNamespace + '.' + itemNamespace;
+                itemNamespace = task.RootNamespace + '.' + itemNamespace;
             }
             return itemNamespace;
         }

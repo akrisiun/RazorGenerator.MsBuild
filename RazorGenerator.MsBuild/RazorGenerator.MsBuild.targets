@@ -31,9 +31,9 @@
                                     RootNamespace="$(RootNamespace)">
             <Output TaskParameter="GeneratedFiles" ItemName="FilesGenerated" />
         </RazorCodeGen>
-        <ItemGroup>
+        <!--<ItemGroup>
           <Compile Include="@(FilesGenerated)" Condition=" '@(RazorOutputFiles)' == '' "/>
           <Compile Include="@(RazorOutputFiles)" />
-        </ItemGroup>
+        </ItemGroup>-->
     </Target>
 </Project>
