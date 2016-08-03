@@ -40,3 +40,4 @@ lib/*.dll
 RazorGenerator*.dll
 
 System*.dll
+gen.vshost.exe.*
