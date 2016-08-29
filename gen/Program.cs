@@ -16,7 +16,8 @@ namespace RazorGenerator.MsBuild
             {
                 arg1 = null;
                 Debugger.Launch();
-                Debugger.Break();
+                if (Debugger.IsAttached)
+                    Debugger.Break();
             }
 
             var dir = arg1 ?? Environment.CurrentDirectory;
