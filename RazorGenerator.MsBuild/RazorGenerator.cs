@@ -143,7 +143,8 @@ namespace RazorGenerator.MsBuild
                     return true;
             }
 
-            task.CodeGenDirectory = task.CodeGenDirectory ?? Environment.CurrentDirectory + @"\CodeGen";
+            var currentDirectory = Environment.CurrentDirectory;
+            task.CodeGenDirectory = task.CodeGenDirectory ?? currentDirectory + @"\CodeGen";
 
             string projectRoot = String.IsNullOrEmpty(task.ProjectRoot)
                 ? Directory.GetCurrentDirectory() : task.ProjectRoot;
@@ -158,14 +159,17 @@ namespace RazorGenerator.MsBuild
                     string itemNamespace = task.GetNamespace(file, projectRelativePath);
 
                     string outputPath = Path.Combine(task.CodeGenDirectory, projectRelativePath.TrimStart(Path.DirectorySeparatorChar)) + ".cs";
+
+                    var shortfilePath = filePath.StartsWith(currentDirectory) ? filePath.Substring(currentDirectory.Length + 1) : filePath;
+                    var shortoutputPath = outputPath.StartsWith(currentDirectory) ? outputPath.Substring(currentDirectory.Length + 1) : outputPath;
                     if (!RequiresRecompilation(filePath, outputPath))
                     {
-                        task.LogMessage(MessageImportance.Low, "Skipping file {0} since {1} is already up to date", filePath, outputPath);
+                        task.LogMessage(MessageImportance.Low, "Skipping file {0} since {1} is already up to date", shortfilePath, shortoutputPath);
                         continue;
                     }
                     EnsureDirectory(outputPath);
 
-                    task.LogMessage(MessageImportance.Low, "Precompiling {0} at path {1}", filePath, outputPath);
+                    task.LogMessage(MessageImportance.Low, "Precompiling {0} at path {1}", shortfilePath, shortoutputPath);
                     var host = hostManager.CreateHost(filePath, projectRelativePath, itemNamespace);
 
                     bool hasErrors = false;
