@@ -4,6 +4,7 @@ using System.IO;
 using System.Web.Configuration;
 using System.Web.WebPages.Razor.Configuration;
 using System.Linq;
+using System.Diagnostics;
 
 namespace RazorGenerator.Core
 {
@@ -68,6 +69,13 @@ namespace RazorGenerator.Core
                 // Bug in Mono framework.
                 // Configure namespaces using the RazorGenerator directives file instead.
             }
+            catch (System.Configuration.ConfigurationErrorsException ex)
+            {
+                if (Debugger.IsAttached)
+                    Debugger.Log(0, "ConfigurationErrorsException", ex.Message);
+            }
+
+
             base.Initialize(razorHost, directives);
         }
 

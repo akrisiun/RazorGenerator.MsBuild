@@ -31,8 +31,11 @@ namespace RazorGenerator.MsBuild
 
             var mvcBin = Path.Combine(dir, @"bin\System.Web.Mvc.dll");
             var razorBin = Path.Combine(dir, @"bin\System.Web.Razor.dll");
+            
             LoadDllSafe(razorBin);
             LoadDllSafe(mvcBin);
+            LoadDllSafe(Path.Combine(dir, @"bin\System.Web.WebPages.Razor.dll"));
+            LoadDllSafe(Path.Combine(dir, @"bin\System.Web.WebPages.dll"));
 
             var task = Razor.Start(dir);
 

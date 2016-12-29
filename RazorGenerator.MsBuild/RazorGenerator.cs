@@ -175,7 +175,10 @@ namespace RazorGenerator.MsBuild
                     bool hasErrors = false;
                     host.Error += (o, eventArgs) =>
                     {
-                        task.LogError("RazorGenerator err", eventArgs.ErorrCode.ToString() + " msg: " + eventArgs.ErrorMessage);
+                        if (Debugger.IsAttached)
+                            Debugger.Break();
+
+                        task.LogError("RazorGenerator unknown error", eventArgs.ErorrCode.ToString() + " msg: " + eventArgs.ErrorMessage);
                                 //, helpKeyword: "", file: file.ItemSpec,
                                 //     lineNumber: (int)eventArgs.LineNumber, columnNumber: (int)eventArgs.ColumnNumber,
                                 //     endLineNumber: (int)eventArgs.LineNumber, endColumnNumber: (int)eventArgs.ColumnNumber,
@@ -186,6 +189,8 @@ namespace RazorGenerator.MsBuild
 
                     try
                     {
+                        // TypeUtil.GetTypeWithReflectionPermission
+
                         string result = host.GenerateCode();
 
                         if (!String.IsNullOrWhiteSpace(result)) // !hasErrors)
@@ -198,15 +203,21 @@ namespace RazorGenerator.MsBuild
                     {
                         if (exception.InnerException != null)
                             exception = exception.InnerException;
-                        task.LogError("RazorGenerator err", exception.Message);
+
+                        if (Debugger.IsAttached)
+                            Debugger.Break();
+
+                        task.LogError("RazorGenerator GenerateCode error", exception.Message);
+
+                        Console.WriteLine(exception.Message);
                         if (task._Log == null)
                             task.Log.LogErrorFromException(exception, showStackTrace: true, showDetail: true, file: null);
-                        return false;
+                        //  return false;
                     }
-                    if (hasErrors)
-                    {
-                        return false;
-                    }
+                    //if (hasErrors)
+                    //{
+                    //    return false;
+                    //}
 
                     var taskItem = new TaskItem(outputPath);
                     taskItem.SetMetadata("AutoGen", "true");

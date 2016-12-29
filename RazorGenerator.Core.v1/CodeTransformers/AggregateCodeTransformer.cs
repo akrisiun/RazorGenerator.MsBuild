@@ -1,10 +1,14 @@
-﻿using System.CodeDom;
+﻿using System;
+using System.CodeDom;
+using System.Diagnostics;
 using System.Collections.Generic;
 
 namespace RazorGenerator.Core
 {
     public abstract class AggregateCodeTransformer : RazorCodeTransformerBase
     {
+
+        public Exception LastError { get; set; }
 
         protected abstract IEnumerable<RazorCodeTransformerBase> CodeTransformers
         {
@@ -15,7 +19,20 @@ namespace RazorGenerator.Core
         {
             foreach (var transformer in CodeTransformers)
             {
-                transformer.Initialize(razorHost, directives);
+                try
+                {
+
+                    transformer.Initialize(razorHost, directives);
+                }
+                catch (Exception ex) { 
+                    LastError = ex;
+                    if (Debugger.IsAttached)
+                    {
+                        Debugger.Log(0, "AggregateCodeTransformer", Environment.NewLine + ex.Message);
+                        if (ex.InnerException != null)
+                            Debugger.Log(0, "AggregateCodeTransformer", Environment.NewLine + ex.InnerException.Message);
+                    }
+                }
             }
         }
 
