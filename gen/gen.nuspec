@@ -1,0 +1,14 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2012/06/nuspec.xsd">
+  <metadata>
+    <id>gen</id>
+    <version>1.0.0</version>
+    <authors>Andrius K</authors>
+    <owners>gen</owners>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>Razor generarator msbuild task</description>
+    <dependencies>
+      <group targetFramework=".NETFramework4.6" />
+    </dependencies>
+  </metadata>
+</package>
