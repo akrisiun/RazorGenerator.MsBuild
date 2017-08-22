@@ -41,3 +41,5 @@ RazorGenerator*.dll
 
 System*.dll
 gen.vshost.exe.*
+.vs/RazorGenerator.Runtime/
+*.ide

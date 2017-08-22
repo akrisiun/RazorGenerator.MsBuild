@@ -139,6 +139,8 @@ namespace RazorGenerator.MsBuild
                     task.FilesToPrecompile = array;
                 }
 
+                if (task.FilesToPrecompile == null)
+                    return false;
                 if (!task.FilesToPrecompile.Any())
                     return true;
             }
@@ -172,7 +174,7 @@ namespace RazorGenerator.MsBuild
                     task.LogMessage(MessageImportance.Low, "Precompiling {0} at path {1}", shortfilePath, shortoutputPath);
                     var host = hostManager.CreateHost(filePath, projectRelativePath, itemNamespace);
 
-                    bool hasErrors = false;
+                    // bool hasErrors = false;
                     host.Error += (o, eventArgs) =>
                     {
                         if (Debugger.IsAttached)
@@ -184,7 +186,7 @@ namespace RazorGenerator.MsBuild
                                 //     endLineNumber: (int)eventArgs.LineNumber, endColumnNumber: (int)eventArgs.ColumnNumber,
                                 //     message: eventArgs.ErrorMessage);
 
-                        hasErrors = true;
+                        //  hasErrors = true;
                     };
 
                     try
