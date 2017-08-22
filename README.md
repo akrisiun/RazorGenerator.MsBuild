@@ -9,7 +9,7 @@ IInternalConfigHost host, String typeString, Boolean throwOnError)
 at System.Configuration.MgmtConfigurationRecord.CreateSectionFactory(FactoryRecord factoryRecord)
 at System.Configuration.BaseConfigurationRecord.FindAndEnsureFactoryRecord(
 String configKey, Boolean& isRootDeclaredHere)
-d:\Sanitex\RazorGenerator.MsBuild\RazorGenerator.MsBuild.targets	28	9	DocumentE
+c:\bin\RazorGenerator.MsBuild\RazorGenerator.MsBuild.targets	28	9	DocumentE
 
 override protected object CreateSectionFactory(FactoryRecord factoryRecord) {
 
