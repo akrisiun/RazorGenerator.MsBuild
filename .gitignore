@@ -4,9 +4,7 @@ obj/
 *.user
 .svn
 *.zip
-#ignore thumbnails created by windows
 Thumbs.db
-#Ignore files build by Visual Studio
 *.obj
 *.exe
 *.pdb
@@ -41,3 +39,10 @@ RazorGenerator*.dll
 
 System*.dll
 gen.vshost.exe.*
+.vs/RazorGenerator.Runtime/
+*.ide
+.vs*/
+*.ide
+
+WebGrease.dll
+Antlr3.Runtime.dll

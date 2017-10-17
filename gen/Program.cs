@@ -25,34 +25,82 @@ namespace RazorGenerator.MsBuild
                     Debugger.Break();
             }
 
-            var dir = arg1 ?? Environment.CurrentDirectory;
+            var domainDir = AppDomain.CurrentDomain.BaseDirectory ?? "";
+            if (domainDir.EndsWith(@"bin\Debug\netcoreapp2.0\")
+                || domainDir.EndsWith(@"bin\Debug\net46\"))
+                domainDir = Path.GetFullPath(domainDir + @"..\..\..\..");
+            else
+            {
+                if (File.Exists($@"{Environment.CurrentDirectory}\RazorGenerator.MsBuild.dll"))
+                    domainDir = Environment.CurrentDirectory;
+            }
+            DomainDir = domainDir + @"\";
+
+            var dir = Path.GetFullPath(arg1 ?? domainDir) + @"\";
 			
             System.IO.Directory.SetCurrentDirectory(dir);
 
-            var mvcBin = Path.Combine(dir, @"bin\System.Web.Mvc.dll");
-            var razorBin = Path.Combine(dir, @"bin\System.Web.Razor.dll");
+
+            BaseDir = dir;
+            var asm = LoadDllSafe(domainDir + @"RazorGenerator.MsBuild.dll");
+            AppDomain.CurrentDomain.AssemblyResolve += Resolve;
             
-            LoadDllSafe(razorBin);
-            LoadDllSafe(mvcBin);
-            LoadDllSafe(Path.Combine(dir, @"bin\System.Web.WebPages.Razor.dll"));
-            LoadDllSafe(Path.Combine(dir, @"bin\System.Web.WebPages.dll"));
+            object task = null;
+            var taskType = asm.GetType("RazorGenerator.MsBuild.Razor"); // Razor.Start(dir);
+            var Start = taskType.GetMethod("Start", BindingFlags.Static| BindingFlags.Public);
+            task = Start.Invoke(null, new object[] { dir });
 
-            var task = Razor.Start(dir);
-
-            task.ExecuteCore();
+            var ExecuteCore = taskType.GetMethod("ExecuteCore", BindingFlags.Static| BindingFlags.Public);
+            ExecuteCore.Invoke(null, new object[] { task });
+            // RazorGenerator.MsBuild.Razor.ExecuteCore(task);
         }
 
-        public static void LoadDllSafe(string dllFile)
+        static string BaseDir { get; set; }
+        static string DomainDir { get; set; }
+
+        // ResolveEventHandler(object sender, ResolveEventArgs args);
+        static Assembly Resolve(object sender, ResolveEventArgs args)
         {
+            var dir = BaseDir;
+            var mvcBin = Path.Combine(dir, @"bin\System.Web.Mvc.dll");
+            var razorBin = Path.Combine(dir, @"bin\System.Web.Razor.dll");
+            var name = args.Name;
+
+            Assembly asm =null;
+            if (name.Contains("Web.Razor"))
+               asm = LoadDllSafe(razorBin);
+            else if (name.Contains("Web.Razor"))
+               asm = LoadDllSafe(mvcBin);
+            else if (name.Contains("Web.WebPages.Razor"))
+               asm = LoadDllSafe(Path.Combine(dir, @"bin\System.Web.WebPages.Razor.dll"));
+            else if (name.Contains("Web.WebPages"))
+               asm = LoadDllSafe(Path.Combine(dir, @"bin\System.Web.WebPages.dll"));
+
+            else if (name.Contains("Build.Framework"))
+               asm = LoadDllSafe(dir + @"Microsoft.Build.Framework.dll");
+            else if (name.Contains("Build.Utilities"))
+               asm = LoadDllSafe(dir + @"Microsoft.Build.Utilities.v4.0.dll");
+
+            // Could not load file or assembly
+            //  'Microsoft.Build.Utilities.v4.0, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL'. Reference assemblies should not be loaded for execution.  They can only be loaded in the Reflection-only loader context. (Exception from HRESULT: 0x80131058)
+
+            return asm;
+        }
+
+        public static Assembly LoadDllSafe(string dllFile)
+        {
+            Assembly asm = null;
+            string dir2 = DomainDir + Path.GetFileName(dllFile);
             if (!File.Exists(dllFile))
-                return;
+                return asm;
 
             try {
 
-                var asm = Assembly.LoadFile(dllFile);
+                asm = Assembly.LoadFile(dllFile);
                 Console.WriteLine(string.Format("Loaded {0}", asm.FullName));
 
             } catch (Exception ex) { Console.WriteLine(ex.Message); }
+            return asm;
         }
     }
 }

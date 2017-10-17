@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2013
-VisualStudioVersion = 12.0.40629.0
+# Visual Studio 15
+VisualStudioVersion = 15.0.26929.2
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RazorGenerator.MsBuild", "RazorGenerator.MsBuild\RazorGenerator.MsBuild.csproj", "{A229A158-CFD5-4D05-945D-A3192F5C895B}"
 EndProject
@@ -9,11 +9,12 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RazorGenerator.Core", "Razo
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RazorGenerator.Core.v3", "RazorGenerator.Core.v3\RazorGenerator.Core.v3.csproj", "{1B52667F-2486-4F11-ADAF-4C223241C8DF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "gen", "gen\gen.csproj", "{80382D01-F103-4D65-838B-27B8AD58BE0D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "gen", "gen\gen.csproj", "{80382D01-F103-4D65-838B-27B8AD58BE0D}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{C2A3206D-8F30-4A30-9DED-5F7B2F94728D}"
 	ProjectSection(SolutionItems) = preProject
 		build.cmd = build.cmd
+		nuget.config = nuget.config
 		README.md = README.md
 	EndProjectSection
 EndProject
@@ -76,6 +77,9 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {ECF9B4D5-99E7-45C9-9E8E-671E33BEA96E}
 	EndGlobalSection
 	GlobalSection(TestCaseManagementSettings) = postSolution
 		CategoryFile = RazorGenerator.Runtime.vsmdi
